@@ -1,6 +1,6 @@
 # Scripts
 
-A collectin of scripts for performing different tasks
+A collection of scripts for performing different tasks
 
 
 ## `execution-env-resolver`
