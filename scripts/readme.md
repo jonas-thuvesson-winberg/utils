@@ -11,3 +11,5 @@ Usage (example):
 ```sh
 #!/usr/bin/env execution-env-resolver python,python3
 ```
+
+To use it as in the above example (with it being globally available), copy the `execution-env-resolver` to `/usr/local/bin`.
