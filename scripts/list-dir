@@ -1,0 +1,34 @@
+#!/usr/bin/env python-resolver python,python3
+
+import os
+import argparse
+from termcolor import cprint, colored
+
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument("-f", "--fullpath",
+                    help="Prints full paths to files or dirs listed", action="store_true")
+parser.add_argument("-a", "--all-files", help="Prints hidden files as well", action="store_true")
+
+args = parser.parse_args()
+
+class Colors:
+    DIR_COLOR = 'magenta'
+    FILE_COLOR = 'cyan'
+
+filtered_dir_items = [item for item in os.listdir() if not item.startswith(".") or args.all_files is True]
+
+for i in filtered_dir_items:
+    path = os.path.join(os.getcwd(), i)
+    if os.path.isdir(path):
+        if args.fullpath:
+            cprint(f'{path}/', Colors.DIR_COLOR)
+        else:
+            cprint(f'{i}/', Colors.DIR_COLOR)
+
+    else:
+        if args.fullpath:
+            cprint(path, Colors.FILE_COLOR)
+        else:
+            cprint(i, Colors.FILE_COLOR)

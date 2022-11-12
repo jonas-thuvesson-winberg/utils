@@ -1,0 +1,16 @@
+#!/bin/sh
+
+OIFS=$IFS
+IFS=,
+for i in $(echo "$1")
+do
+    IFS=$OIFS
+    command_exists=$(command -v $i)
+    if [ $command_exists ]
+    then
+        $i "${@:2}" 
+        exit 0;
+    fi
+done
+
+exit 1
