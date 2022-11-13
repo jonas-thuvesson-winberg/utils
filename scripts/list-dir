@@ -2,24 +2,38 @@
 
 import os
 import argparse
-from termcolor import cprint, colored
+from termcolor import cprint
 
 
 parser = argparse.ArgumentParser()
 
 parser.add_argument("-f", "--fullpath",
                     help="Prints full paths to files or dirs listed", action="store_true")
-parser.add_argument("-a", "--all-files", help="Prints hidden files as well", action="store_true")
+parser.add_argument("-a", "--all-files",
+                    help="Prints hidden files as well", action="store_true")
 
 args = parser.parse_args()
+
 
 class Colors:
     DIR_COLOR = 'magenta'
     FILE_COLOR = 'cyan'
 
-filtered_dir_items = [item for item in os.listdir() if not item.startswith(".") or args.all_files is True]
 
-for i in filtered_dir_items:
+def sort_by_type_and_name(item_name):
+    path = os.path.join(os.getcwd(), item_name)
+    isdir = os.path.isdir(path)
+    print(path)
+    print(isdir)
+    return f'{"dir" if isdir else "file"}_{item_name}'
+
+
+filtered_dir_items = [item for item in os.listdir(
+) if not item.startswith(".") or args.all_files is True]
+
+sorted = sorted(filtered_dir_items, key=sort_by_type_and_name)
+
+for i in sorted:
     path = os.path.join(os.getcwd(), i)
     if os.path.isdir(path):
         if args.fullpath:
