@@ -11,8 +11,20 @@ parser.add_argument("-f", "--fullpath",
                     help="Prints full paths to files or dirs listed", action="store_true")
 parser.add_argument("-a", "--all-files",
                     help="Prints hidden files as well", action="store_true")
+parser.add_argument("-d", "--depth",
+                    help="The depth for checking, and listing, subfolders. Be careful with this one. Defaults to 0 (current directory)")
+parser.add_argument("-ex", "--exclude",
+                    help="Folders or files that should not be included (not full path). Can be a lone item, or a list separated by commas")
 
 args = parser.parse_args()
+
+depth = 0 if not args.depth else args.depth
+if int(depth) < 0:
+    raise Exception("Depth can't be less than 0")
+
+
+excludes = [] if not args.exclude else [i.strip()
+                                        for i in args.exclude.split(",")]
 
 
 class Colors:
@@ -21,37 +33,48 @@ class Colors:
     TYPE_COLOR = 'yellow'
 
 
-def sort_by_type_and_name(item_name):
-    path = os.path.join(os.getcwd(), item_name)
-    isdir = os.path.isdir(path)
-    return f'{"dir" if isdir else "file"}_{item_name}'
+def print_dir(path, excludes, depth, current_depth):
+    def sort_by_type_and_name(item_name):
+        path = os.path.join(os.getcwd(), item_name)
+        isdir = os.path.isdir(path)
+        return f'{"dir" if isdir else "file"}_{item_name}'
 
+    def add_repeating_string(str, num):
+        return "".join([str for n in range(num)])
 
-filtered_dir_items = [item for item in os.listdir(
-) if not item.startswith(".") or args.all_files]
+    filtered_dir_items = [item for item in os.listdir(path
+                                                      ) if not item.startswith(".") or args.all_files]
 
-sorted = sorted(filtered_dir_items, key=sort_by_type_and_name)
+    sorted_items = sorted(filtered_dir_items, key=sort_by_type_and_name)
 
+    for i in sorted_items:
+        if i in excludes:
+            continue
 
-def add_space(num):
-    return "".join([" " for n in range(num)])
+        full_item_path = os.path.join(path, i)
+        if os.path.isdir(full_item_path):
+            if args.fullpath:
+                message = colored(f'{full_item_path}/', Colors.DIR_COLOR)
+            else:
+                message = colored(f'{i}/', Colors.DIR_COLOR)
 
+            type_message = colored('DIR', Colors.TYPE_COLOR)
+            print(
+                f'{add_repeating_string("-", current_depth)}[{type_message}]{add_repeating_string(" ", 3)}{message}')
 
-for i in sorted:
-    path = os.path.join(os.getcwd(), i)
-    if os.path.isdir(path):
-        if args.fullpath:
-            message = colored(f'{path}/', Colors.DIR_COLOR)
+            if int(depth) > 0 and int(current_depth) < int(depth):
+                print_dir(full_item_path, excludes, depth, current_depth+1)
+
         else:
-            message = colored(f'{i}/', Colors.DIR_COLOR)
-        
-        type_message = colored('DIR', Colors.TYPE_COLOR)
-        print(f'[{type_message}]{add_space(5)}{message}')
-    else:
-        if args.fullpath:
-            message = colored(f'{path}', Colors.FILE_COLOR)
-        else:
-            message = colored(f'{i}', Colors.FILE_COLOR)
+            if args.fullpath:
+                message = colored(f'{full_item_path}', Colors.FILE_COLOR)
+            else:
+                message = colored(f'{i}', Colors.FILE_COLOR)
 
-        type_message = colored('FILE', Colors.TYPE_COLOR)
-        print(f'[{type_message}]{add_space(4)}{message}')
+            type_message = colored('FILE', Colors.TYPE_COLOR)
+            print(
+                f'{add_repeating_string("-", current_depth)}[{type_message}]{add_repeating_string(" ", 2)}{message}')
+
+
+path = os.path.join(os.getcwd())
+print_dir(path, excludes, depth, 0)
