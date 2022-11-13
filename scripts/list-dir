@@ -38,26 +38,21 @@ def add_space(num):
 
 
 for i in sorted:
-    type_message = ""
-    message = ""
-    is_dir = False
-
     path = os.path.join(os.getcwd(), i)
     if os.path.isdir(path):
         is_dir = True
         if args.fullpath:
-            type_message = colored('DIR', Colors.TYPE_COLOR)
             message = colored(f'{path}/', Colors.DIR_COLOR)
         else:
-            type_message = colored('DIR', Colors.TYPE_COLOR)
             message = colored(f'{i}/', Colors.DIR_COLOR)
+        
+        type_message = colored('DIR', Colors.TYPE_COLOR)
+        print(f'[{type_message}]{add_space(5)}{message}')
     else:
         if args.fullpath:
-            type_message = colored('FILE', Colors.TYPE_COLOR)
             message = colored(f'{path}', Colors.FILE_COLOR)
         else:
-            type_message = colored('FILE', Colors.TYPE_COLOR)
             message = colored(f'{i}', Colors.FILE_COLOR)
 
-    output = f'[{type_message}]{add_space(5)}{message}' if is_dir else f'[{type_message}]{add_space(4)}{message}'
-    print(output)
+        type_message = colored('FILE', Colors.TYPE_COLOR)
+        print(f'[{type_message}]{add_space(4)}{message}')
