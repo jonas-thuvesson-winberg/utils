@@ -12,4 +12,8 @@ Usage (example):
 #!/usr/bin/env execution-env-resolver python,python3
 ```
 
-To use it as in the above example (with it being globally available), copy the `execution-env-resolver` to `/usr/local/bin`.
+To use it as in the above example (with it being globally available), either copy the `execution-env-resolver` to `/usr/local/bin`, or add the `scripts` directory to the path, by adding the following line (with the correct absolute path) to your `.bashrc` or `.zshrc`: 
+
+```
+export PATH="/<some path>/utils/scripts:$PATH"
+```
