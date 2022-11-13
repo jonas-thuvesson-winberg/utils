@@ -40,7 +40,6 @@ def add_space(num):
 for i in sorted:
     path = os.path.join(os.getcwd(), i)
     if os.path.isdir(path):
-        is_dir = True
         if args.fullpath:
             message = colored(f'{path}/', Colors.DIR_COLOR)
         else:
