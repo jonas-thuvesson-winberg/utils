@@ -2,7 +2,7 @@
 
 import os
 import argparse
-from termcolor import cprint
+from termcolor import colored
 
 
 parser = argparse.ArgumentParser()
@@ -18,13 +18,12 @@ args = parser.parse_args()
 class Colors:
     DIR_COLOR = 'magenta'
     FILE_COLOR = 'cyan'
+    TYPE_COLOR = 'yellow'
 
 
 def sort_by_type_and_name(item_name):
     path = os.path.join(os.getcwd(), item_name)
     isdir = os.path.isdir(path)
-    print(path)
-    print(isdir)
     return f'{"dir" if isdir else "file"}_{item_name}'
 
 
@@ -33,16 +32,32 @@ filtered_dir_items = [item for item in os.listdir(
 
 sorted = sorted(filtered_dir_items, key=sort_by_type_and_name)
 
+
+def add_space(num):
+    return "".join([" " for n in range(num)])
+
+
 for i in sorted:
+    type_message = ""
+    message = ""
+    is_dir = False
+
     path = os.path.join(os.getcwd(), i)
     if os.path.isdir(path):
+        is_dir = True
         if args.fullpath:
-            cprint(f'{path}/', Colors.DIR_COLOR)
+            type_message = colored('DIR', Colors.TYPE_COLOR)
+            message = colored(f'{path}/', Colors.DIR_COLOR)
         else:
-            cprint(f'{i}/', Colors.DIR_COLOR)
-
+            type_message = colored('DIR', Colors.TYPE_COLOR)
+            message = colored(f'{i}/', Colors.DIR_COLOR)
     else:
         if args.fullpath:
-            cprint(path, Colors.FILE_COLOR)
+            type_message = colored('FILE', Colors.TYPE_COLOR)
+            message = colored(f'{path}', Colors.FILE_COLOR)
         else:
-            cprint(i, Colors.FILE_COLOR)
+            type_message = colored('FILE', Colors.TYPE_COLOR)
+            message = colored(f'{i}', Colors.FILE_COLOR)
+
+    output = f'[{type_message}]{add_space(5)}{message}' if is_dir else f'[{type_message}]{add_space(4)}{message}'
+    print(output)
