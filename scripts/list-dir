@@ -28,7 +28,7 @@ def sort_by_type_and_name(item_name):
 
 
 filtered_dir_items = [item for item in os.listdir(
-) if not item.startswith(".") or args.all_files is True]
+) if not item.startswith(".") or args.all_files]
 
 sorted = sorted(filtered_dir_items, key=sort_by_type_and_name)
 
