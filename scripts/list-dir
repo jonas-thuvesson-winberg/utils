@@ -7,7 +7,7 @@ from termcolor import colored
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("-f", "--fullpath",
+parser.add_argument("-fp", "--fullpath",
                     help="Prints full paths to files or dirs listed", action="store_true")
 parser.add_argument("-a", "--all-files",
                     help="Prints hidden files as well", action="store_true")
@@ -15,6 +15,8 @@ parser.add_argument("-d", "--depth",
                     help="The depth for checking, and listing, subfolders. Be careful with this one. Defaults to 0 (current directory)")
 parser.add_argument("-ex", "--exclude",
                     help="Folders or files that should not be included (not full path). Can be a lone item, or a list separated by commas")
+parser.add_argument("-in", "--include",
+                    help="Folders or files that should be included (not full path). Can be a lone item, or a list separated by commas")
 
 args = parser.parse_args()
 
@@ -23,17 +25,22 @@ if int(depth) < 0:
     raise Exception("Depth can't be less than 0")
 
 
-excludes = [] if not args.exclude else [i.strip()
+excludes = [] if not args.exclude else [i.strip().lower()
                                         for i in args.exclude.split(",")]
+
+includes = [] if not args.include else [i.strip().lower()
+                                        for i in args.include.split(",")]
 
 
 class Colors:
     DIR_COLOR = 'magenta'
-    FILE_COLOR = 'cyan'
-    TYPE_COLOR = 'yellow'
+    FILE_COLOR = 'blue'
+    TYPE_TEXT_COLOR = 'grey'
+
+    LEVEL_COLORS = ['white', 'white', 'white', 'yellow', 'yellow', 'red']
 
 
-def print_dir(path, excludes, depth, current_depth):
+def print_dir(path, includes, excludes, depth, current_depth):
     def sort_by_type_and_name(item_name):
         path = os.path.join(os.getcwd(), item_name)
         isdir = os.path.isdir(path)
@@ -42,28 +49,63 @@ def print_dir(path, excludes, depth, current_depth):
     def add_repeating_string(str, num):
         return "".join([str for n in range(num)])
 
-    filtered_dir_items = [item for item in os.listdir(path
-                                                      ) if not item.startswith(".") or args.all_files]
+    def path_is_included(path_parts, includes):
+        for part in path_parts:
+            if part.lower() in includes:
+                return True
+        return False
+
+    try:
+        filtered_dir_items = [item for item in os.listdir(path
+                                                          ) if not item.startswith(".") or args.all_files]
+    except PermissionError:
+        print(
+            f'{add_repeating_string(" ", current_depth)}Not allowed to print the contents of "{path}"')
+        return
 
     sorted_items = sorted(filtered_dir_items, key=sort_by_type_and_name)
 
     for i in sorted_items:
+        full_item_path = os.path.join(path, i)
+        # print(full_item_path)
+        parts = os.path.join(path).strip("/").split("/")
+        parent = parts[-1]
+        # print(parent)
+        if len(includes) > 0 and not path_is_included(parts, includes):
+            continue
+
         if i in excludes:
             continue
 
-        full_item_path = os.path.join(path, i)
+        # level_color = Colors.LEVEL_COLORS[min(
+        #     current_depth, len(Colors.LEVEL_COLORS)-1)]
+
+        level_color = 'grey'
+
+        # level = "" if depth == 0 else colored(
+        #     f'({current_depth})', level_color)
+
+        spacer_repeat = add_repeating_string("| ", 1)
+
+        # parent_str = f'{parent}' if i else ''
+        # path_display = (colored(
+        #     f'{parent_str}', level_color)) + colored(' / ', 'white', attrs=["bold"])
+        level_spacer = " " if current_depth == 0 else f' {colored(add_repeating_string(spacer_repeat, current_depth), level_color, attrs=["dark"])} '
+
         if os.path.isdir(full_item_path):
             if args.fullpath:
                 message = colored(f'{full_item_path}/', Colors.DIR_COLOR)
             else:
-                message = colored(f'{i}/', Colors.DIR_COLOR)
+                message = colored(f'{i}', Colors.DIR_COLOR)
 
-            type_message = colored('DIR', Colors.TYPE_COLOR)
+            type_message = colored(
+                f'[DIR{", DEPTH: "+"{}".format(current_depth) if current_depth > 0 else ""}]', Colors.DIR_COLOR, attrs=["bold", "dark"])
             print(
-                f'{add_repeating_string("-", current_depth)}[{type_message}]{add_repeating_string(" ", 3)}{message}')
+                f'{level_spacer}{type_message}{add_repeating_string(" ", 1)}{message}')
 
             if int(depth) > 0 and int(current_depth) < int(depth):
-                print_dir(full_item_path, excludes, depth, current_depth+1)
+                print_dir(full_item_path, includes,
+                          excludes, depth, current_depth+1)
 
         else:
             if args.fullpath:
@@ -71,10 +113,12 @@ def print_dir(path, excludes, depth, current_depth):
             else:
                 message = colored(f'{i}', Colors.FILE_COLOR)
 
-            type_message = colored('FILE', Colors.TYPE_COLOR)
+            type_message = colored(
+                f'[FILE{", DEPTH: "+"{}".format(current_depth) if current_depth > 0 else ""}]', Colors.FILE_COLOR, attrs=["bold", "dark"])
+
             print(
-                f'{add_repeating_string("-", current_depth)}[{type_message}]{add_repeating_string(" ", 2)}{message}')
+                f'{level_spacer}{type_message}{add_repeating_string(" ", 1)}{message}')
 
 
 path = os.path.join(os.getcwd())
-print_dir(path, excludes, depth, 0)
+print_dir(path, includes, excludes, depth, 0)
