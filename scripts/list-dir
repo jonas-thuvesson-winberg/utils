@@ -1,4 +1,4 @@
-#!/usr/bin/env execution-env-resolver python,python3
+#!/usr/bin/env -S execution-env-resolver python,python3
 
 import os
 import argparse
@@ -44,7 +44,7 @@ def print_dir(path, includes, excludes, depth, current_depth):
     def sort_by_type_and_name(item_name):
         path = os.path.join(os.getcwd(), item_name)
         isdir = os.path.isdir(path)
-        return f'{"dir" if isdir else "file"}_{item_name}'
+        return "{}".format("dir" if isdir else "file", item_name)
 
     def add_repeating_string(str, num):
         return "".join([str for n in range(num)])
@@ -60,8 +60,8 @@ def print_dir(path, includes, excludes, depth, current_depth):
                                                           ) if not item.startswith(".") or args.all_files]
     except PermissionError:
         print(
-            f'{add_repeating_string(" ", current_depth)}Not allowed to print the contents of "{path}"')
-        return
+            "{}{}{}".format(add_repeating_string(" ", current_depth), "Not allowed to print the contents of ", path))
+        return;
 
     sorted_items = sorted(filtered_dir_items, key=sort_by_type_and_name)
 
@@ -90,18 +90,17 @@ def print_dir(path, includes, excludes, depth, current_depth):
         # parent_str = f'{parent}' if i else ''
         # path_display = (colored(
         #     f'{parent_str}', level_color)) + colored(' / ', 'white', attrs=["bold"])
-        level_spacer = " " if current_depth == 0 else f' {colored(add_repeating_string(spacer_repeat, current_depth), level_color, attrs=["dark"])} '
+        level_spacer = " " if current_depth == 0 else " {} ".format(colored(add_repeating_string(spacer_repeat, current_depth), level_color, attrs=["dark"]))
 
         if os.path.isdir(full_item_path):
             if args.fullpath:
-                message = colored(f'{full_item_path}/', Colors.DIR_COLOR)
+                message = colored("{}/".format(full_item_path), Colors.DIR_COLOR)
             else:
-                message = colored(f'{i}', Colors.DIR_COLOR)
+                message = colored('{}'.format(i), Colors.DIR_COLOR)
 
             type_message = colored(
-                f'[DIR{", DEPTH: "+"{}".format(current_depth) if current_depth > 0 else ""}]', Colors.DIR_COLOR, attrs=["bold", "dark"])
-            print(
-                f'{level_spacer}{type_message}{add_repeating_string(" ", 1)}{message}')
+                "{}{}{}".format("[DIR", (", DEPTH: {}".format(current_depth)) if current_depth > 0 else "", "]"), Colors.DIR_COLOR, attrs=["bold", "dark"])
+            print("{}{}{}{}".format(level_spacer, type_message, add_repeating_string(" ", 1), message))
 
             if int(depth) > 0 and int(current_depth) < int(depth):
                 print_dir(full_item_path, includes,
@@ -109,15 +108,14 @@ def print_dir(path, includes, excludes, depth, current_depth):
 
         else:
             if args.fullpath:
-                message = colored(f'{full_item_path}', Colors.FILE_COLOR)
+                message = colored("{}".format(full_item_path), Colors.FILE_COLOR)
             else:
-                message = colored(f'{i}', Colors.FILE_COLOR)
+                message = colored("{}".format(i), Colors.FILE_COLOR)
 
             type_message = colored(
-                f'[FILE{", DEPTH: "+"{}".format(current_depth) if current_depth > 0 else ""}]', Colors.FILE_COLOR, attrs=["bold", "dark"])
-
+                "{}{}{}".format("[FILE", (", DEPTH: {}".format(current_depth)) if current_depth > 0 else "", "]"), Colors.FILE_COLOR, attrs=["bold", "dark"])
             print(
-                f'{level_spacer}{type_message}{add_repeating_string(" ", 1)}{message}')
+                "{}{}{}{}".format(level_spacer, type_message, add_repeating_string(" ", 1), message))
 
 
 path = os.path.join(os.getcwd())
