@@ -72,28 +72,19 @@ def print_dir(path, includes, excludes, depth, current_depth):
 
     for i in sorted_items:
         full_item_path = os.path.join(path, i)
-        # print(full_item_path)
+
         parts = os.path.join(full_item_path).strip("/").split("/")
-        # print(parts)
+
         if len(includes) > 0 and not path_is_included(parts, includes):
             continue
 
         if i in excludes:
             continue
 
-        # level_color = Colors.LEVEL_COLORS[min(
-        #     current_depth, len(Colors.LEVEL_COLORS)-1)]
-
         level_color = 'grey'
-
-        # level = "" if depth == 0 else colored(
-        #     f'({current_depth})', level_color)
 
         spacer_repeat = add_repeating_string("| ", 1)
 
-        # parent_str = f'{parent}' if i else ''
-        # path_display = (colored(
-        #     f'{parent_str}', level_color)) + colored(' / ', 'white', attrs=["bold"])
         level_spacer = " " if current_depth == 0 else " {} ".format(colored(
             add_repeating_string(spacer_repeat, current_depth), level_color, attrs=["dark"]))
 
