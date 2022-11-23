@@ -1,3 +1,0 @@
-#!/bin/zsh
-
-elixir ./elixir-scripts/script.exs $@
