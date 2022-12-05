@@ -38,7 +38,6 @@ class Colors:
     DIR_COLOR = 'magenta'
     FILE_COLOR = 'blue'
     TYPE_TEXT_COLOR = 'grey'
-
     LEVEL_COLORS = ['white', 'white', 'white', 'yellow', 'yellow', 'red']
 
 
@@ -46,7 +45,7 @@ def print_dir(path, includes, excludes, depth, current_depth):
     def sort_by_type_and_name(item_name):
         path = os.path.join(os.getcwd(), item_name)
         isdir = os.path.isdir(path)
-        return "{}".format("dir" if isdir else "file", item_name)
+        return "{}{}".format("dir" if isdir else "file", item_name)
 
     def add_repeating_string(str, num):
         return "".join([str for n in range(num)])
