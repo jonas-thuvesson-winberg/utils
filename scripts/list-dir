@@ -97,7 +97,7 @@ def print_dir(path, includes, excludes, depth, current_depth):
             type_message = colored(
                 "{}{}{}".format("[DIR", (", DEPTH: {}".format(current_depth)) if current_depth > 0 else "", "]"), Colors.DIR_COLOR, attrs=["bold", "dark"])
             print("{}{}{}{}".format(level_spacer, type_message,
-                  add_repeating_string(" ", 1), message))
+                  add_repeating_string(" ", 2), message))
 
             if int(depth) > 0 and int(current_depth) < int(depth):
                 print_dir(full_item_path, includes,
