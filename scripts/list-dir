@@ -1,8 +1,134 @@
 #!/usr/bin/env -S execution-env-resolver python,python3
 
+'''
+List the contents of a directory, and subdirectories, with some options to filter the output.
+'''
+
 import os
 import argparse
 from termcolor import colored
+
+
+class Colors:
+    '''
+    Terminal colors for the output
+    '''
+
+    DIR_COLOR = 'magenta'
+    FILE_COLOR = 'blue'
+    TYPE_TEXT_COLOR = 'grey'
+    LEVEL_COLORS = ['white', 'white', 'white', 'yellow', 'yellow', 'red']
+
+
+def print_dir(path: str, includes: list[str], excludes: list[str], depth: int, current_depth: int):
+    '''
+    Print the contents of a directory, and subdirectories, with some options to filter the output.
+    :param path: The path to the directory to print
+    :param includes: A list of folders or files to include in the output
+    :param excludes: A list of folders or files to exclude from the output
+    :param depth: The depth to print the directory tree
+    :param current_depth: The current depth of the directory tree
+    :return: None
+    '''
+    def sort_by_type_and_name(item_name):
+        loc_path = os.path.join(os.getcwd(), item_name)
+        isdir = os.path.isdir(loc_path)
+        return f"{'dir' if isdir else 'file'}{item_name}"
+
+    def add_repeating_string(r_str, num):
+        return "".join([r_str for n in range(num)])
+
+    def path_is_included(path_parts, includes):
+        for part in path_parts:
+            if part.lower() in includes:
+                return True
+        return False
+
+    try:
+        filtered_dir_items = [
+            item for
+            item in os.listdir(path)
+            if not item.startswith(".") or args.all_files
+        ]
+    except PermissionError:
+        print(
+            f"Not allowed to print the contents of {path}")
+        return
+    except FileNotFoundError:
+        print(f'The path "{path}" does not exist')
+        return
+
+    sorted_items = sorted(filtered_dir_items, key=sort_by_type_and_name)
+
+    for item in sorted_items:
+        full_item_path = os.path.join(path, item)
+
+        parts = os.path.join(full_item_path).strip("/").split("/")
+
+        if len(includes) > 0 and not path_is_included(parts, includes):
+            continue
+
+        if item in excludes:
+            continue
+
+        level_color = 'grey'
+
+        spacer_repeat = add_repeating_string("| ", 1)
+
+        level_spacer = " "
+        if current_depth == 0:
+            level_spacer += ""
+        else:
+            level_spacer += f" {colored(
+                add_repeating_string(spacer_repeat, current_depth), level_color, attrs=['dark'])
+            } "
+
+        if os.path.isdir(full_item_path):
+            if args.fullpath:
+                message = colored(
+                    f"{full_item_path}/", Colors.DIR_COLOR)
+            else:
+                message = colored(f'{item}', Colors.DIR_COLOR)
+
+            type_message = colored(
+                f"[DIR{', DEPTH: ' + str(current_depth) if current_depth > 0 else ''}]",
+                Colors.DIR_COLOR, attrs=["bold", "dark"]
+            )
+            print(
+                f"{level_spacer}{type_message}{add_repeating_string(' ', 2)}{message}"
+            )
+
+            if int(depth) > 0 and int(current_depth) < int(depth):
+                print_dir(full_item_path, includes,
+                          excludes, depth, current_depth+1)
+
+        else:
+            if args.fullpath:
+                message = colored(f"{full_item_path}", Colors.FILE_COLOR)
+            else:
+                message = colored(f"{item}", Colors.FILE_COLOR)
+
+            type_message = colored(
+                f"[FILE{', DEPTH: ' + str(current_depth) if current_depth > 0 else ''}]",
+                Colors.FILE_COLOR, attrs=["bold", "dark"]
+            )
+            print(
+                f"{level_spacer}{type_message}{add_repeating_string(' ', 1)}{message}"
+            )
+
+
+def get_explicit_root(root):
+    '''
+    Get the root folder to start from. If the root is not an absolute path, it will be
+    joined with the current working directory.
+    '''
+    if root:
+        if root.startswith("/"):
+            return root
+
+        return os.path.join(os.getcwd(), root)
+
+    return os.getcwd()
 
 
 parser = argparse.ArgumentParser()
@@ -12,119 +138,30 @@ parser.add_argument("-fp", "--fullpath",
 parser.add_argument("-a", "--all-files",
                     help="Prints hidden files as well", action="store_true")
 parser.add_argument("-d", "--depth",
-                    help="The depth for checking, and listing, subfolders. Be careful with this one. Defaults to 0 (current directory)")
+                    help="The depth for checking, and listing, subfolders. "
+                    "Be careful with this one. "
+                    "Defaults to 0 (current directory)")
 parser.add_argument("-ex", "--exclude",
-                    help="Folders or files that should not be included (not full path). Can be a lone item, or a list separated by commas")
+                    help="Folders or files that should not be included (not full path)."
+                    " Can be a lone item, or a list separated by commas")
 parser.add_argument("-in", "--include",
-                    help="Folders or files that should be included (not full path). Can be a lone item, or a list separated by commas")
+                    help="Folders or files that should be included (not full path). "
+                    "Can be a lone item, or a list separated by commas")
 parser.add_argument("-r", "--root",
                     help="Root folder to start from.")
 
 args = parser.parse_args()
 
-depth = 0 if not args.depth else args.depth
-if int(depth) < 0:
-    raise Exception("Depth can't be less than 0")
+d = 0 if not args.depth else args.depth
+if int(d) < 0:
+    raise ValueError("Depth can't be less than 0")
 
 
-excludes = [] if not args.exclude else [i.strip().lower()
-                                        for i in args.exclude.split(",")]
+e = [] if not args.exclude else [i.strip().lower()
+                                 for i in args.exclude.split(",")]
 
-includes = [] if not args.include else [i.strip().lower()
-                                        for i in args.include.split(",")]
+i = [] if not args.include else [i.strip().lower()
+                                 for i in args.include.split(",")]
 
-
-class Colors:
-    DIR_COLOR = 'magenta'
-    FILE_COLOR = 'blue'
-    TYPE_TEXT_COLOR = 'grey'
-    LEVEL_COLORS = ['white', 'white', 'white', 'yellow', 'yellow', 'red']
-
-
-def print_dir(path, includes, excludes, depth, current_depth):
-    def sort_by_type_and_name(item_name):
-        path = os.path.join(os.getcwd(), item_name)
-        isdir = os.path.isdir(path)
-        return "{}{}".format("dir" if isdir else "file", item_name)
-
-    def add_repeating_string(str, num):
-        return "".join([str for n in range(num)])
-
-    def path_is_included(path_parts, includes):
-        for part in path_parts:
-            if part.lower() in includes:
-                return True
-        return False
-
-    try:
-        filtered_dir_items = [item for item in os.listdir(path
-                                                          ) if not item.startswith(".") or args.all_files]
-    except PermissionError:
-        print(
-            "Not allowed to print the contents of {}".format(path))
-        return
-    except FileNotFoundError:
-        print('The path "{}" does not exist'.format(path))
-        return
-
-    sorted_items = sorted(filtered_dir_items, key=sort_by_type_and_name)
-
-    for i in sorted_items:
-        full_item_path = os.path.join(path, i)
-
-        parts = os.path.join(full_item_path).strip("/").split("/")
-
-        if len(includes) > 0 and not path_is_included(parts, includes):
-            continue
-
-        if i in excludes:
-            continue
-
-        level_color = 'grey'
-
-        spacer_repeat = add_repeating_string("| ", 1)
-
-        level_spacer = " " if current_depth == 0 else " {} ".format(colored(
-            add_repeating_string(spacer_repeat, current_depth), level_color, attrs=["dark"]))
-
-        if os.path.isdir(full_item_path):
-            if args.fullpath:
-                message = colored(
-                    "{}/".format(full_item_path), Colors.DIR_COLOR)
-            else:
-                message = colored('{}'.format(i), Colors.DIR_COLOR)
-
-            type_message = colored(
-                "{}{}{}".format("[DIR", (", DEPTH: {}".format(current_depth)) if current_depth > 0 else "", "]"), Colors.DIR_COLOR, attrs=["bold", "dark"])
-            print("{}{}{}{}".format(level_spacer, type_message,
-                  add_repeating_string(" ", 2), message))
-
-            if int(depth) > 0 and int(current_depth) < int(depth):
-                print_dir(full_item_path, includes,
-                          excludes, depth, current_depth+1)
-
-        else:
-            if args.fullpath:
-                message = colored("{}".format(
-                    full_item_path), Colors.FILE_COLOR)
-            else:
-                message = colored("{}".format(i), Colors.FILE_COLOR)
-
-            type_message = colored(
-                "{}{}{}".format("[FILE", (", DEPTH: {}".format(current_depth)) if current_depth > 0 else "", "]"), Colors.FILE_COLOR, attrs=["bold", "dark"])
-            print(
-                "{}{}{}{}".format(level_spacer, type_message, add_repeating_string(" ", 1), message))
-
-
-def get_explicit_root(root):
-    if root:
-        if root.startswith("/"):
-            return root
-        else:
-            return os.path.join(os.getcwd(), root)
-    else:
-        return os.getcwd()
-
-
-path = get_explicit_root(args.root)
-print_dir(path, includes, excludes, depth, 0)
+p = get_explicit_root(args.root)
+print_dir(p, i, e, d, 0)
